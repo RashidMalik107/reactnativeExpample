@@ -1,0 +1,26 @@
+{
+  "name": "testExample",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "react": "16.3.1",
+    "react-native": "0.55.3",
+    "react-native-modal-dropdown": "^0.6.2",
+    "react-native-navigator": "^0.4.2",
+    "react-navigation": "^1.0.0-beta.19"
+  },
+  "devDependencies": {
+    "babel-jest": "24.1.0",
+    "babel-preset-react-native": "4.0.1",
+    "jest": "24.1.0",
+    "react-test-renderer": "16.3.1"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
