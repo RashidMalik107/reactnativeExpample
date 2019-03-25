@@ -29,7 +29,7 @@ export default class Login extends Component {
         })
             .catch(response => {
                 this.setState({ status: true });
-                AsyncStorage.setItem('loggedIn', 'false');
+                AsyncStorage.setItem('loggedIn', 'true');
                 ToastAndroid.show(response.response.data.message, ToastAndroid.SHORT)
             })
     }
