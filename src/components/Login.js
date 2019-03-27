@@ -23,7 +23,7 @@ export default class Login extends Component {
 
                 Keyboard.dismiss();
                 ToastAndroid.show('Logged in successfully', ToastAndroid.SHORT);
-                this.props.navigation.navigate('Product')
+                this.props.navigation.navigate('Order')
                 
             }
         })

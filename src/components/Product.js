@@ -49,6 +49,135 @@ export default class Product extends Component {
     this.getProductsByCategory();
   }
 
+  createEntryForCart(productType) {
+    var price = this.state.products.price;
+    let obj = {
+      productId: this.state.products.id,
+      productName: this.state.products.name,
+      urduProductName: this.state.products.urdu_name,
+      quantity: this.state.quantity,
+      price: parseFloat(this.state.products.price).toFixed(2),
+      totalAmount: parseFloat(price * this.state.quantity).toFixed(2),
+      image: this.state.products.image_url,
+      sku: this.state.products.sku,
+      unit: this.state.products.unit,
+      configurable: false,
+      promotion: this.state.products.isPromotion,
+      productType: 'simple'
+    };
+    if (productType == 'configurable') {
+      obj['configurable'] = true;
+      if (this.state.addedAmount == '') {
+        alert('Please enter amount');
+        return false;
+      }
+      if (this.state.selectedUnit == 'rs') {
+        var quantity = (this.state.addedAmount / price).toFixed(2);
+        obj['totalAmount'] = this.state.addedAmount;
+      } else if (this.state.selectedUnit == 'g') {
+        var quantity = (this.state.addedAmount / 1000).toFixed(2);
+        obj['totalAmount'] = (parseFloat(price) * parseFloat(quantity)).toFixed(2);
+      } else {
+        var quantity = this.state.addedAmount;
+        obj['totalAmount'] = (parseFloat(price) * parseFloat(quantity)).toFixed(2);
+      }
+      obj['quantity'] = parseFloat(quantity).toFixed(2);
+      if (parseFloat(quantity) > this.product.max_quantity && this.product.isPromotion) {
+        alert('You can only add limited quantity');
+        return false;
+      }
+    }
+    // else if(this.product.isPromotion && !this.product.configurable){
+    //   obj['quantity'] = this.state.quantity;
+    //   obj['totalAmount'] = this.product.price * this.state.quantity ;
+    // }
+    AsyncStorage.getItem("cart").then((cartValue) => {
+      let cart = JSON.parse(cartValue);
+      let x = 1;
+      for (let i in cart) {
+        if (cart[i].productId == this.product.id && cart[i].productType == 'simple') {
+          x = 0;
+          if (productType == 'configurable') {
+            if ((parseFloat(cart[i].quantity) + parseFloat(quantity)) > this.product.max_quantity && this.product.isPromotion) {
+              alert('You can only add limited quantity');
+              return false;
+            }
+            cart[i].quantity = parseFloat(cart[i].quantity) + parseFloat(quantity);
+            cart[i].quantity = cart[i].quantity.toFixed(2);
+            cart[i].totalAmount = cart[i].quantity * cart[i].price;
+          } else {
+            if ((parseFloat(cart[i].quantity) + parseFloat(this.state.quantity)) > this.product.max_quantity && this.product.isPromotion) {
+              alert('You can only add limited quantity');
+              return false;
+            }
+            cart[i].quantity = parseFloat(cart[i].quantity) + parseFloat(this.state.quantity);
+            cart[i].totalAmount = price * cart[i].quantity;
+          }
+          cart[i].totalAmount = cart[i].totalAmount.toFixed(2);
+        }
+      }
+
+      if (x) {
+        cart.push(obj);
+      }
+      AsyncStorage.setItem("cart", JSON.stringify(cart));
+      this.calculateSum();
+      if (productType == 'configurable') {
+        this.setState({ switchCard: true });
+      }
+      var toast = 'Added ' + this.state.quantity + ' ' + obj.productName + ' to the cart successfully';
+      ToastAndroid.show(toast, ToastAndroid.SHORT);
+      if (!this.product.configurable && this.product.promotion) {
+        this.setState({ quantity: this.max_quantity });
+      } else {
+        this.setState({ quantity: 1 });
+      }
+    });
+  }
+  
+
+  addToCart(productType) {
+    if (this.state.products.isOutOfStock) {
+      alert('Item out of stock');
+      return false;
+    }
+    if (!this.state.products.isPromotion) {
+      this.createEntryForCart(productType);
+      return false;
+    }
+    if (productType == 'configurable') {
+      debugger
+      if (this.state.selectedUnit == 'rs') {
+        this.product['quantity'] = (this.state.addedAmount / this.product.price).toFixed(2);
+      } else if (this.state.selectedUnit == 'g') {
+        this.product['quantity'] = (this.state.addedAmount / 1000).toFixed(2);
+      } else {
+        this.product['quantity'] = this.state.addedAmount;
+      }
+    } else {
+      this.product['quantity'] = this.state.quantity;
+    }
+    this.product['customer_id'] = this.customerId;
+    AsyncStorage.getItem("cart").then((value) => {
+      var cart = JSON.parse(value);
+      for (var item of cart) {
+        if (item.productType == 'simple') {
+          if (item.productId == this.product.id) {
+            this.product['quantity'] = parseFloat(this.product['quantity']) + parseFloat(item.quantity);
+          }
+        }
+      }
+      AsyncStorage.getItem("authToken").then((value) => {
+        httpService.postRequest('/product/checkInStockBuyableQuantity', value, this.product).then(response => {
+          this.createEntryForCart(productType);
+        })
+          .catch(response => {
+            alert(response.response.data.message);
+          })
+      });
+    })
+  }
+
   addBundleItemstoCart() {
     AsyncStorage.getItem("cart").then((value) => {
       let obj = {
@@ -123,7 +252,7 @@ export default class Product extends Component {
 
   renderProducts() {
     return this.state.products.map(product =>
-      <View key={product.id} product={product} style={styles.CardContainer}>
+      <View style={styles.CardContainer}>
         <View onPress={() => this.goToPage()} style={styles.CardWrapper}>
           <View style={styles.imageHolder}>
             <Image style={styles.signleImage} source={{ uri: product.image_url }} />
@@ -174,6 +303,21 @@ export default class Product extends Component {
 
     )
   }
+  // for get request 
+
+  // ** make a request url 
+  // ** params doesn't go in object format instead passed with the request
+  // ** var reqUrl = ('/product/getProductByCategory?sales_agent_id='+this.state.userId+'&customer_id='+this.state.customerId
+  //  axios.get(Global.BASE_URL + reqUrl, { headers: { 'Authorization': value } })
+
+
+  // for post request
+  // ** make a request url 
+  // ** obj is the object to send to the server (can be any varaible)
+  // ** example  var obj = {
+  // sales_agent_id: this.state.userId, customer_id: this.state.customerId
+  //}
+  // axios.post(Global.BASE_URL + reqUrl, obj, { headers: { 'Authorization': value } })
 
   getProductsByCategory() {
     debugger
@@ -224,9 +368,7 @@ export default class Product extends Component {
         <View style={styles.cartBottom}>
           <View style={styles.totalBill}>
             <Text style={styles.amountLabel}>Total Bill</Text>
-            <Text style={styles.amountVal}>Rs.
-          {(this.state.total)}
-            </Text>
+            <Text style={styles.amountVal}>Rs. {(this.state.total)} </Text>
           </View>
           <View style={styles.cartIcon}>
             <TouchableOpacity style={styles.cartContainer} onPress={() => this.goToCartPage()}>

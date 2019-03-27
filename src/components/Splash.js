@@ -9,9 +9,16 @@ export default class Splash extends Component {
 
   constructor(props) {
     super(props);
+    
   }
   componentWillMount() {
-    setTimeout(() => { this.props.navigation.navigate('Login') }, 3000)
+    setTimeout(() => { AsyncStorage.getItem('loggedIn').then((value)=>{
+      if(value){
+        this.props.navigation.navigate('Order')
+      }else{
+        this.props.navigation.navigate('Login')
+      }
+    }) }, 3000)
   }
 
   render() {

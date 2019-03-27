@@ -1,15 +1,21 @@
 import React from 'react';
 import { AppRegistry, StyleSheet, ScrollView } from 'react-native';
-import { DrawerItems,DrawerNavigator } from 'react-navigation';
+import { DrawerItems, DrawerNavigator } from 'react-navigation';
 import Splash from './src/components/Splash';
 import Login from './src/components/Login';
 import Product from './src/components/Product';
+import Order from './src/components/Order';
 
 const Drawer = DrawerNavigator(
   {
+
     Product: {
       path: '/Product',
       screen: Product
+    },
+    Order: {
+      path: '/Order',
+      screen: Order
     },
     Login: {
       path: '/Login',
@@ -18,11 +24,13 @@ const Drawer = DrawerNavigator(
     Splash: {
       path: '/',
       screen: Splash,
-      navigationOptions: ({navigation}) => ({
+      navigationOptions: ({ navigation }) => ({
         drawerLockMode: 'locked-closed'
       })
     },
+
   },
+
   {
     initialRouteName: 'Splash',
     drawerPosition: 'left',
@@ -44,5 +52,5 @@ const Drawer = DrawerNavigator(
   }
 )
 
-const styles = StyleSheet.create({ });
+const styles = StyleSheet.create({});
 AppRegistry.registerComponent('testExample', () => Drawer);
